@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>URL Parser</title>
+    <style>
+        body{
+            padding: 15% 10%;
+        }
+    </style>
+    <script type="text/javascript" src="js/jquery-1.9.0.min.js"></script>
+    <script type="text/javascript" src="js/knockout-2.2.1.js"></script>
+    <script type="text/javascript">
+        var URLParserVM = function(){
+            var self = this;
+            self.url = ko.observable("");
+            self.hostname = ko.computed(function(){
+                var url = self.url();
+                return url.substring(0, url.indexOf("?"));
+            })
+            self.parameters = ko.computed(function(){
+                var url = self.url();
+                if(url.indexOf("?") < 0)
+                    return [];
+                var parameters = url.substring(url.indexOf("?")+1, url.length).split("&");
+                return $.map(parameters, function(p){
+                    return {
+                        name: ko.observable(p.substring(0, p.indexOf("="))),
+                        value: ko.observable(p.substring(p.indexOf("=")+1, p.length))
+                    }
+                })
+            });
+            self.buildURL = function(){
+                var url = self.hostname()+"?";
+                $.each(self.parameters(), function(i, p){
+                    url += encodeURIComponent(p.name())+"="+encodeURIComponent(p.value())+"&";
+                })
+                $("#builtURL").val(url.substring(0, url.length-1));
+            }
+        }
+
+        $(document).ready(function(){
+            urlParser = new URLParserVM();
+            ko.applyBindings(urlParser, $('body')[0]);
+        });
+    </script>
+</head>
+<body>
+    <div>
+        <button data-bind="click: buildURL">Build URL</button>
+        <input type="text" size=25 id="builtURL" />
+    </div>
+    <label>Enter URL here:</label>
+    <input type="text" size=25 data-bind="value: url" />
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody data-bind="foreach: parameters">
+            <tr>
+                <td><input type="text" data-bind="value: $data.name"></td>
+                <td><input type="text" data-bind="value: $data.value"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
